@@ -42,5 +42,22 @@ Section Main.
     end
   where "f ∈p F" := (InParamCompl f F).
   Notation "f ∉p F" := (~ InParamCompl f F) (at level 65).
-  
+
+  Definition compl_incl {X : Type} (F G : ParamCompl X) :=
+    forall (f : X -> nat), f ∈p F -> f ∈p G.
+  Notation "F ⊑ G" := (compl_incl F G) (at level 60).
+
+  Section Lemmas.
+
+    Context {X : Type}.
+
+    Lemma comp_incl_refl:
+      forall (F : ParamCompl X),
+        F ⊑ F.
+    Proof.
+      now intros.
+    Qed.
+
+  End Lemmas.
+
 End Main.
