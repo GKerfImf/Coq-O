@@ -1,5 +1,6 @@
 Require Import Program.Basics.
 Require Import Coq.Init.Nat.
+Require Import Lia.
 
 Section Util.
 
@@ -49,14 +50,101 @@ Section Main.
 
   Section Lemmas.
 
-    Context {X : Type}.
+    Section BasicInclusion.
 
-    Lemma comp_incl_refl:
-      forall (F : ParamCompl X),
-        F ⊑ F.
-    Proof.
-      now intros.
-    Qed.
+      Context {X : Type}.
+
+      Lemma comp_incl_refl:
+        forall (F : ParamCompl X),
+          F ⊑ F.
+      Proof.
+        now intros.
+      Qed.
+
+      Lemma comp_incl_trans:
+        forall (F G H : ParamCompl X),
+          F ⊑ G -> G ⊑ H -> F ⊑ H.
+      Proof.
+        now intros * IN1 IN2; firstorder.
+      Qed.
+
+      Lemma comp_incl_f_Of:
+        forall (F : ParamCompl X),
+          F ⊑ O(F).
+      Proof.
+        intros ? ? IN.
+        exists f; split; auto.
+        now exists 1, 0; intros ?; lia.
+      Qed.
+
+      Lemma comp_incl_base_ge:
+        forall (f g : X -> nat),
+          (forall x, f x = g x) ->
+          ⟦f⟧ ⊑ ⟦g⟧.
+      Proof.
+        now intros * LE f IN x; rewrite <-LE.
+      Qed.
+
+      Lemma comp_incl_O:
+        forall (F G : ParamCompl X),
+          F ⊑ G -> O(F) ⊑ O(G).
+      Proof.
+        intros * SUB f IN.
+        destruct IN as (fo & IN & a & b &LE).
+        exists fo; split.
+        + now apply SUB in IN.
+        + now exists a, b.
+      Qed.
+
+    End BasicInclusion.
+
+    Section Arithmetic.
+
+      Context {X : Type}.
+
+      (* ------------------------------- Plus ------------------------------- *)
+
+      Lemma comp_incl_plus_compat:
+        forall (F1 F2 G1 G2 : ParamCompl X),
+          F1 ⊑ F2 -> G1 ⊑ G2 -> F1 ⊕ G1 ⊑ F2 ⊕ G2.
+      Proof.
+        intros * IN1 IN2 f IN.
+        inversion_clear IN as [g1 [g2 [IN3 [IN4 LE]]]].
+        now exists g1, g2; eauto.
+      Qed.
+
+      Lemma comp_incl_plus_compat_l:
+        forall (F G1 G2 : ParamCompl X),
+          G1 ⊑ G2 -> F ⊕ G1 ⊑ F ⊕ G2.
+      Proof. now intros * IN; apply comp_incl_plus_compat. Qed.
+
+      Lemma comp_incl_plus_compat_r:
+        forall (F1 F2 G : ParamCompl X),
+          F1 ⊑ F2 -> F1 ⊕ G ⊑ F2 ⊕ G.
+      Proof. now intros * IN; apply comp_incl_plus_compat. Qed.
+
+      (* ------------------------------- Mult ------------------------------- *)
+
+      Lemma comp_incl_mult_compat:
+        forall (F1 F2 G1 G2 : ParamCompl X),
+          F1 ⊑ G1 -> F2 ⊑ G2 -> F1 ⊗ F2 ⊑ G1 ⊗ G2.
+      Proof.
+        intros * IN1 IN2 f IN.
+        inversion_clear IN as [g1 [g2 [IN3 [IN4 LE]]]].
+        now exists g1, g2; eauto.
+      Qed.
+
+      Lemma comp_incl_mult_compat_l:
+        forall (F G1 G2 : ParamCompl X),
+          G1 ⊑ G2 -> F ⊗ G1 ⊑ F ⊗ G2.
+      Proof. now intros * IN; apply comp_incl_mult_compat. Qed.
+
+      Lemma comp_incl_mult_compat_r:
+        forall (F1 F2 G : ParamCompl X),
+          F1 ⊑ F2 -> F1 ⊗ G ⊑ F2 ⊗ G.
+      Proof. now intros * IN; apply comp_incl_mult_compat. Qed.
+
+    End Arithmetic.
 
   End Lemmas.
 
