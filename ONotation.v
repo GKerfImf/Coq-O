@@ -399,6 +399,41 @@ Section Main.
 
     End Arithmetic.
 
+    Section Const.
+
+      Context {X : Type}.
+
+      (** Constant parameter *)
+      Definition _1 (x : X) := 1.
+
+      Lemma in_const_impl_bounded_by_const:
+        forall (c : X -> nat),
+          c ∈p O(⟦_1⟧) ->
+          exists b, forall x, c x <= b.
+      Proof.
+        intros ? IN.
+        inversion_clear IN as [a [IN1 EQ]].
+        destruct EQ as [c1 [c2 B2]].
+        exists (c1 + c2); intros.
+        rewrite B2; clear B2.
+        apply PeanoNat.Nat.add_le_mono_r.
+        rewrite <-PeanoNat.Nat.mul_1_r.
+        now apply PeanoNat.Nat.mul_le_mono_l, IN1.
+      Qed.
+
+      Lemma bounded_by_const_impl_in_const:
+        forall (c : X -> nat) (b : nat),
+          (forall x, c x <= b) ->
+          c ∈p O(⟦_1⟧).
+      Proof.
+        intros ? ? LE.
+        exists _1; split.
+        - now constructor.
+        - exists b, 0. intros.
+          now rewrite PeanoNat.Nat.add_0_r; unfold _1; rewrite PeanoNat.Nat.mul_1_r.
+      Qed.
+
+    End Const.
   End Lemmas.
 
 End Main.
