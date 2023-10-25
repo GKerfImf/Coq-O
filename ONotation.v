@@ -119,6 +119,51 @@ Section Main.
         - now apply IN2.
       Qed.
 
+      Lemma comp_incl_o_exp:
+        forall (a b : nat),
+          a < b ->
+          (fun n => n^a) ∈p o(⟦fun n => n^b⟧).
+      Proof.
+        intros ? ? LT.
+        assert (EX: exists δ, δ > 0 /\ b = δ + a).
+        { now exists (b - a); split; lia. }
+        destruct EX as [δ [POS EQ]]; subst b; clear LT.
+        exists (fun n => n ^ (δ + a)); split. easy.
+        intros k c; exists (k * k ^ a + c).
+        intros x.
+        destruct (PeanoNat.Nat.eq_0_gt_0_cases x) as [Z|P]; subst.
+        - destruct a, δ; simpl; lia.
+        - rewrite PeanoNat.Nat.pow_add_r.
+          eapply PeanoNat.Nat.le_trans; [
+            | apply PeanoNat.Nat.add_le_mono_r,
+              PeanoNat.Nat.mul_le_mono_r,
+              PeanoNat.Nat.pow_le_mono_r,
+              PeanoNat.Nat.neq_0_lt_0]; try lia.
+          rewrite PeanoNat.Nat.pow_1_r.
+          destruct (PeanoNat.Nat.le_ge_cases k x) as [NEQ|NEQ].
+          + eapply PeanoNat.Nat.le_trans;
+              [ | apply PeanoNat.Nat.add_le_mono_r, PeanoNat.Nat.mul_le_mono_r, NEQ]; lia.
+          + eapply PeanoNat.Nat.le_trans; [
+              | apply PeanoNat.Nat.add_le_mono_l,
+                PeanoNat.Nat.add_le_mono_r,
+                PeanoNat.Nat.mul_le_mono_l,
+                PeanoNat.Nat.pow_le_mono_l,
+                NEQ]; try lia.
+      Qed.
+
+      Lemma comp_incl_oO:
+        forall (f g : X -> nat),
+          f ∈p o(⟦g⟧) -> f ∈p O(⟦g⟧).
+      Proof.
+        intros ? g' IN.
+        destruct IN as [g [IN LT]].
+        exists g; split; auto; clear IN g'.
+        specialize (LT 1 0).
+        destruct LT as [δ LT].
+        exists 1, δ.
+        now intros x; specialize (LT x); lia.
+      Qed.
+
       Lemma comp_incl_O:
         forall (F G : ParamCompl X),
           F ⊑ G -> O(F) ⊑ O(G).
