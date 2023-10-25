@@ -96,6 +96,54 @@ Section Main.
         + now exists a, b.
       Qed.
 
+      Lemma comp_incl_O_r:
+        forall (F G : ParamCompl X),
+          F ⊑ O(G) -> O(F) ⊑ O(G).
+      Proof.
+        intros * SUB f IN.
+        destruct IN as (fo & IN & a & b & LE).
+        apply SUB in IN.
+        destruct IN as (foo & IN & α & β & LE2).
+        exists foo; split.
+        + now apply IN.
+        + eexists (a * α); exists (a * β + b).
+          intros.
+          specialize (LE x); specialize (LE2 x).
+          nia.
+      Qed.
+
+      Lemma coml_incl_O_idem:
+        forall (F : ParamCompl X), O(O(F)) ⊑ O(F).
+      Proof.
+        intros ? ? IN.
+        destruct IN as [f1 [IN1 [a1 [b1 LE1]]]].
+        destruct IN1 as [f2 [IN2 [a2 [b2 LE2]]]].
+        exists f2; split; auto.
+        exists (a1 * a2), (a1 * b2 + b1).
+        intros; specialize (LE1 x); specialize (LE2 x).
+        nia.
+      Qed.
+
+      Lemma coml_incl_oO_K:
+        forall (F : ParamCompl X), o(O(F)) ⊑ o(F).
+      Proof.
+        intros ? f IN.
+        inversion_clear IN as [f1 [IN1 LE1]].
+        inversion_clear IN1 as [f2 [IN2 [α [β LE]]]].
+        assert(L : α = 0 \/ α > 0) by lia.
+        destruct L as [Z|P]; subst.
+        { exists f2; split; [easy | ].
+          intros; specialize (LE1 a b); destruct LE1 as [δ LE3].
+          exists (β + δ); intros; specialize (LE x); specialize (LE3 x).
+          nia. }
+        { exists f2; split;[easy | ].
+          assert (LE2 : forall a b, exists δ, forall x, a * f x + b <= α * f2 x + (β + δ)).
+          { intros a b; specialize (LE1 a b); destruct LE1 as [δ LE3].
+            exists δ; intros; specialize (LE x); specialize (LE3 x); nia. }
+          intros; specialize (LE2 (α * a) (α * b + β)); destruct LE2 as [δ LE3].
+          exists δ; intros; specialize (LE3 x); nia. }
+      Qed.
+
     End BasicInclusion.
 
     Section Arithmetic.
