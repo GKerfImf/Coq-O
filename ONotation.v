@@ -85,6 +85,40 @@ Section Main.
         now intros * LE f IN x; rewrite <-LE.
       Qed.
 
+      Lemma comp_incl_base_le:
+        forall (f g : X -> nat),
+          (forall x, f x <= g x) ->
+          ⟦f⟧ ⊑ ⟦g⟧.
+      Proof.
+        intros * LE h IN x.
+        now rewrite IN.
+      Qed.
+
+      Lemma comp_incl_base_plus:
+        forall (f g : X -> nat),
+          ⟦f⟧ ⊕ ⟦g⟧ ⊑ ⟦fun x => f x + g x⟧.
+      Proof.
+        intros * h IN.
+        destruct IN as (f1 & f2 & IN1 & IN2 & LE).
+        intros ?; rewrite LE.
+        apply PeanoNat.Nat.add_le_mono.
+        - now apply IN1.
+        - now apply IN2.
+      Qed.
+
+      Lemma comp_incl_base_exp:
+        forall (f g : X -> nat),
+          ⟦f⟧ ↑ ⟦g⟧ ⊑ ⟦fun x => f x ^ g x⟧.
+      Proof.
+        intros * h IN.
+        destruct IN as (f1 & f2 & POS & IN1 & IN2 & LE).
+        intros ?; rewrite LE; clear LE.
+        apply PeanoNat.Nat.pow_le_mono.
+        - now apply PeanoNat.Nat.neq_0_lt_0, POS.
+        - now apply IN1.
+        - now apply IN2.
+      Qed.
+
       Lemma comp_incl_O:
         forall (F G : ParamCompl X),
           F ⊑ G -> O(F) ⊑ O(G).
@@ -92,8 +126,8 @@ Section Main.
         intros * SUB f IN.
         destruct IN as (fo & IN & a & b &LE).
         exists fo; split.
-        + now apply SUB in IN.
-        + now exists a, b.
+        - now apply SUB in IN.
+        - now exists a, b.
       Qed.
 
       Lemma comp_incl_O_r:
@@ -151,6 +185,37 @@ Section Main.
       Context {X : Type}.
 
       (* ------------------------------- Plus ------------------------------- *)
+
+      Lemma comp_incl_le:
+        forall (F : ParamCompl X) (f g : X -> nat),
+          (forall x, f x <= g x) ->
+          g ∈p F -> f ∈p F.
+      Proof.
+        destruct F as [F | | | | | | ]; intros * LE IN.
+        - now eapply comp_incl_base_le.
+        - destruct IN as (g0 & IN & LEg).
+          exists g0; split; [easy | ].
+          intros; specialize (LEg a b); destruct LEg as (δ & LEg).
+          exists δ; intros; specialize (LE x); rewrite <-LEg; nia.
+        - destruct IN as (g0 & IN & LEg).
+          exists g0; split; [easy | ].
+          destruct LEg as (a & b & LEg).
+          exists a, b; intros.
+          now rewrite LE.
+        - destruct IN as (g0 & g1 & IN1 & IN2 & LEg).
+          eexists; eexists; repeat split; eauto 2.
+          intros; specialize (LE x); rewrite <-LEg; nia.
+        - destruct IN as (g0 & g1 & IN1 & IN2 & LEg).
+          eexists; eexists; repeat split; eauto 2.
+          now intros; rewrite LE; apply LEg.
+        - destruct IN as (g0 & g1 & IN1 & IN2 & LEg).
+          eexists; eexists; repeat split; [eauto | eauto | apply LEg | ].
+          now intros; rewrite LE; apply LEg.
+        - destruct IN as (G & MON & g0 & IN & LEg).
+          exists G; split; [easy | ].
+          exists g0; split; [easy | ].
+          now intros; rewrite LE, LEg.
+      Qed.
 
       Lemma comp_incl_max:
         forall (F : ParamCompl X) (f g : X -> nat),
