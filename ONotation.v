@@ -433,6 +433,19 @@ Section Main.
           now rewrite PeanoNat.Nat.add_0_r; unfold _1; rewrite PeanoNat.Nat.mul_1_r.
       Qed.
 
+      Lemma compl_incl_Oc_in_O1:
+        forall (c : X -> nat) (b : nat),
+          (forall x, c x <= b) ->
+          O(⟦c⟧) ⊑ O(⟦_1⟧).
+      Proof.
+        intros ? ? LE f IN.
+        destruct IN as (f1 & IN1 & α & β & IN2).
+        apply bounded_by_const_impl_in_const with (b := α * b + β).
+        intros x; rewrite IN2.
+        specialize (IN1 x); rewrite LE in IN1.
+        nia.
+      Qed.
+
     End Const.
   End Lemmas.
 
