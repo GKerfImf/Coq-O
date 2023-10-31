@@ -2,6 +2,18 @@ Require Import Program.Basics.
 Require Import Coq.Init.Nat.
 Require Import Lia.
 
+Require Import Coq.Setoids.Setoid Coq.Classes.Morphisms Coq.Arith.Arith.
+
+Section SetoidRewrite.
+
+  #[global] Instance setoid_le3_add : Proper (le ==> le ==> le) Nat.add.
+  Proof. intros ? ? LE x' y' LE'; lia. Qed.
+
+  #[global] Instance setoid_le3_mul : Proper (le ==> le ==> le) Nat.mul.
+  Proof. intros ? ? LE x' y' LE'; nia. Qed.
+
+End SetoidRewrite.
+
 Section Util.
 
   Definition monotonic (f : nat -> nat) : Prop :=
@@ -101,9 +113,7 @@ Section Main.
         intros * h IN.
         destruct IN as (f1 & f2 & IN1 & IN2 & LE).
         intros ?; rewrite LE.
-        apply PeanoNat.Nat.add_le_mono.
-        - now apply IN1.
-        - now apply IN2.
+        now rewrite IN1, IN2.
       Qed.
 
       Lemma comp_incl_base_exp:
@@ -186,9 +196,7 @@ Section Main.
         exists foo; split.
         + now apply IN.
         + eexists (a * α); exists (a * β + b).
-          intros.
-          specialize (LE x); specialize (LE2 x).
-          nia.
+          now intros; rewrite LE, LE2; nia.
       Qed.
 
       Lemma coml_incl_O_idem:
@@ -199,8 +207,7 @@ Section Main.
         destruct IN1 as [f2 [IN2 [a2 [b2 LE2]]]].
         exists f2; split; auto.
         exists (a1 * a2), (a1 * b2 + b1).
-        intros; specialize (LE1 x); specialize (LE2 x).
-        nia.
+        now intros; rewrite LE1, LE2; nia.
       Qed.
 
       Lemma coml_incl_oO_K:
@@ -213,14 +220,13 @@ Section Main.
         destruct L as [Z|P]; subst.
         { exists f2; split; [easy | ].
           intros; specialize (LE1 a b); destruct LE1 as [δ LE3].
-          exists (β + δ); intros; specialize (LE x); specialize (LE3 x).
-          nia. }
+          now exists (β + δ); intros; rewrite LE3, LE; nia. }
         { exists f2; split;[easy | ].
           assert (LE2 : forall a b, exists δ, forall x, a * f x + b <= α * f2 x + (β + δ)).
           { intros a b; specialize (LE1 a b); destruct LE1 as [δ LE3].
-            exists δ; intros; specialize (LE x); specialize (LE3 x); nia. }
+            now exists δ; intros; rewrite LE3, LE; nia. }
           intros; specialize (LE2 (α * a) (α * b + β)); destruct LE2 as [δ LE3].
-          exists δ; intros; specialize (LE3 x); nia. }
+          now exists δ; intros; specialize (LE3 x); nia. }
       Qed.
 
     End BasicInclusion.
@@ -447,6 +453,7 @@ Section Main.
       Qed.
 
     End Const.
+
   End Lemmas.
 
 End Main.
