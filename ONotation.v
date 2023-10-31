@@ -229,6 +229,23 @@ Section Main.
           now exists δ; intros; specialize (LE3 x); nia. }
       Qed.
 
+      Lemma coml_incl_Oo_K:
+        forall (F : ParamCompl X), O(o(F)) ⊑ o(F).
+      Proof.
+        intros ? f IN.
+        inversion_clear IN as [f1 [IN1 [α [β LE]]]].
+        inversion_clear IN1 as [f2 [IN2 LE2]].
+        assert(L : α = 0 \/ α > 0) by lia.
+        destruct L as [Z|P]; subst.
+        { exists f2; split; [easy | ].
+          intros; specialize (LE2 a b); destruct LE2 as [δ LE3].
+          now exists (a * β + b); intros; rewrite LE; nia. }
+        { exists f2; split; [easy | ].
+          intros *; specialize (LE2 (a * α) (a * β + b)).
+          destruct LE2 as [δ LE2].
+          now exists δ; intros; rewrite LE, Nat.mul_add_distr_l, <-Nat.add_assoc, Nat.mul_assoc, LE2. }
+      Qed.
+
     End BasicInclusion.
 
     Section Arithmetic.
