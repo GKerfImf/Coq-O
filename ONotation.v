@@ -471,6 +471,122 @@ Section Main.
 
     End Const.
 
+    Section Poly.
+
+      Variable X : Type.
+      Variable size : X -> nat.
+      Hypothesis H_pos_size : forall x, 0 < size x.
+
+      (** Class of poly *)
+      Definition poly (param : X -> nat) := O(⟦param⟧ ↑ O(⟦_1⟧)).
+
+      Lemma in_poly_impl_bounded_by_monom :
+        forall (f : X -> nat),
+          f ∈p poly size ->
+          exists a b c, forall x, f x <= a * (size x)^b + c.
+      Proof.
+        intros ? IN.
+        inversion_clear IN as [g1 [IN1 [a [c B1]]]].
+        inversion_clear IN1 as [g2 [b [POS [Base [IN3 B2]]]]].
+        apply in_const_impl_bounded_by_const in IN3; destruct IN3 as [b' B3].
+        exists a, b', (a + c); intros x.
+        eapply PeanoNat.Nat.le_trans.
+        - now apply B1.
+        - rewrite B2; clear B2 B1.
+          destruct (Nat.eq_0_gt_0_cases (g2 x)) as [Z|P].
+          + rewrite Z; destruct (b x), b';
+              now rewrite ?Nat.pow_succ_r', ?Nat.pow_0_r; nia.
+          + apply Nat.add_le_mono; [ | lia].
+            apply Nat.mul_le_mono_l.
+            now apply Nat.pow_le_mono; auto; lia.
+      Qed.
+
+      Lemma bounded_by_monom_impl_in_poly :
+        forall (f : X -> nat) (a b c : nat),
+          (forall x, f x <= a * (size x)^b + c) ->
+          f ∈p poly size.
+      Proof.
+        intros * LE.
+        exists (fun x => size x ^ b); repeat split.
+        - exists (size), (fun _ => b); repeat split; try easy.
+          eexists; split.
+          + intros ?; eapply le_n.
+          + now exists 0, b.
+        - now exists a, c.
+      Qed.
+
+      Lemma sum_of_poly_is_in_poly' :
+        forall f g,
+          f ∈p poly size ->
+          g ∈p poly size ->
+          (fun x => f x + g x) ∈p poly size.
+      Proof.
+        intros * IN1 IN2.
+        apply in_poly_impl_bounded_by_monom in IN1;
+          apply in_poly_impl_bounded_by_monom in IN2.
+        destruct IN1 as [a__f [b__f [c__f LE__f]]], IN2 as [a__g [b__g [c__g LE__g]]].
+        exists (fun x => size x ^ (max b__f b__g)); repeat split.
+        - exists size, (fun _ => max b__f b__g); repeat split; try easy.
+          exists _1; repeat split; [easy | ].
+          now exists b__f, b__g; unfold _1; intros _; apply Nat.max_lub; lia.
+        - exists (a__f + a__g), (a__f + a__g + c__f + c__g); intros.
+          rewrite LE__f, LE__g; clear LE__f LE__g.
+          destruct (Nat.eq_0_gt_0_cases (size x)) as [Z|P].
+          + now rewrite Z; destruct b__f, b__g; simpl; lia.            
+          + rewrite !Nat.add_assoc; apply plus_le_compat_r.
+            rewrite Nat.add_comm; rewrite !Nat.add_assoc; apply plus_le_compat_r.
+            apply Nat.le_trans with ((a__f + a__g) * size x ^ (max b__f b__g)); [ | lia].
+            now rewrite Nat.mul_add_distr_r; rewrite Nat.add_comm;
+              apply plus_le_compat; apply mult_le_compat_l, Nat.pow_le_mono_r; lia.
+      Qed.
+
+      Lemma sum_of_poly_is_in_poly :
+        poly size ⊕ poly size ⊑ poly size.
+      Proof.
+        intros ? IN; inversion IN as [fl [fr [INl [INr LE]]]].
+        now eapply comp_incl_le; [apply LE| ]; apply sum_of_poly_is_in_poly'.
+      Qed.
+
+      Lemma prod_of_poly_is_in_poly' :
+        forall f g,
+          f ∈p poly size ->
+          g ∈p poly size ->
+          (fun x => f x * g x) ∈p poly size.
+      Proof.
+        intros ? ? IN1 IN2.
+        apply in_poly_impl_bounded_by_monom in IN1;
+          apply in_poly_impl_bounded_by_monom in IN2.
+        destruct IN1 as [a__f [b__f [c__f LE__f]]], IN2 as [a__g [b__g [c__g LE__g]]].
+        exists (fun x => size x ^ (b__f + b__g)); repeat split.
+        - exists size, (fun _ => b__f + b__g); repeat split; try easy.
+          exists _1; repeat split; [easy| ].
+          exists b__f, b__g; unfold _1; intros _; lia.
+        - exists (a__f * a__g + a__f * c__g + a__g * c__f), (c__f * c__g + a__f * c__g + a__g * c__f); intros.
+          rewrite LE__f, LE__g; clear LE__f LE__g.
+          destruct (Nat.eq_0_gt_0_cases (size x)) as [Z|P].
+          + now rewrite Z; destruct b__f, b__g; simpl; lia.
+          + rewrite Nat.mul_add_distr_r, !Nat.mul_add_distr_l.
+            rewrite Nat.add_assoc; apply plus_le_compat; [ | lia].
+            rewrite !Nat.mul_add_distr_r. apply plus_le_compat. apply plus_le_compat.
+            * rewrite <-!Nat.mul_assoc; apply mult_le_compat_l.
+              rewrite Nat.mul_comm; rewrite <-!Nat.mul_assoc; apply mult_le_compat_l.
+              now rewrite <-Nat.pow_add_r; apply Nat.pow_le_mono_r; lia.
+            * rewrite <-!Nat.mul_assoc; apply mult_le_compat_l.
+              rewrite Nat.mul_comm; apply mult_le_compat_l.
+              now apply Nat.pow_le_mono_r; lia.
+            * rewrite Nat.mul_assoc; apply mult_le_compat; [lia| ].
+              now apply Nat.pow_le_mono_r; lia.
+      Qed.
+
+      Lemma prod_of_poly_is_in_poly :
+        poly size ⊗ poly size ⊑ poly size.
+      Proof.
+        intros ? IN; inversion IN as [fl [fr [INl [INr LE]]]].
+        now eapply comp_incl_le; [apply LE| ]; apply prod_of_poly_is_in_poly'.
+      Qed.
+
+    End Poly.
+
   End Lemmas.
 
 End Main.
